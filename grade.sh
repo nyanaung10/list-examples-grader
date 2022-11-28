@@ -8,32 +8,48 @@ rm -rf student-submission
 mkdir student-submission
 git clone $1 student-submission
 
-cp GradeServer.java student-submission/
-#cp Server.java student-submission/
+cd student-submission/
 
-cd student-submission
-ls
-echo "hi we are in the submission"
-if test -f "ListExamples.java"
-then set +e
-echo "this worked"
-else echo "Wrong File!" 
-    exit
+FILE=ListExamples.java
+
+if [[ -f "$FILE" ]]
+then
+        echo "File found"
+        echo "File cloned"
+else
+        echo "File not available or file cannot be opened"
+        echo "Score is 0"
+        exit
 fi
 
-javac -cp .:lib/hamcrest-core-1.3.jar:lib/junit-4.13.2.jar *.java 2>compiler-err.txt
+cp ../TestListExamples.java ./
 
-if [[$? -eq 0]]
-then echo "Compilation Success!"
-else echo "Compilation Failed!"
-    exit
+set +e
+
+SCORE=0
+
+javac -cp ".;../lib/*" ListExamples.java TestListExamples.java
+
+if [[ $? -eq 0 ]]
+then
+  SCORE=$(($SCORE+1))
+  echo "Score is " $SCORE ""
+  echo "Compilation is a success!"
+else
+  echo "Score is" $SCORE ""
+  echo "Compilation unfortunately failed!"
+  exit
 fi
 
-java -cp .:lib/hamcrest-core-1.3.jar:lib/junit-4.13.2.jar org.junit.runner.JUnitCore TestListExamples.java
+FAILED=$(java -cp ".;../lib/*" org.junit.runner.JUnitCore TestListExamples | grep -oP "(?<=,  Failures: )[0-9]+")
 
-if [[$? -eq 0]]
-then echo "passed!"
-else echo "failed"
-    exit
-fi 
+if [[ $? -eq 1 ]]
+then
+  SCORE=$(($SCORE+2))
+  echo"Score is" $SCORE " "
+else
+  SCORE=$(($SCORE+2-$FAILED))
+  echo"Score is" $SCORE " "
+fi
+
 
